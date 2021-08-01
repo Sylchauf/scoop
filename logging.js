@@ -1,4 +1,5 @@
 var moment = require('moment');
+var fs = require('fs');
 const request = require('request');
 const SimpleNodeLogger = require('simple-node-logger');
 
@@ -9,6 +10,10 @@ const fileLogConfig = {
     fileNamePattern: 'log-<DATE>.log',
     dateFormat: 'YYYY-MM-DD'
 };
+
+if (!fs.existsSync(fileLogConfig.logDirectory)) {
+    fs.mkdirSync(fileLogConfig.logDirectory);
+}
 
 fileLog = SimpleNodeLogger.createRollingFileLogger(fileLogConfig);
 consoleLog = SimpleNodeLogger.createSimpleLogger();
@@ -30,8 +35,8 @@ const setLogLevel = (logLevel) => {
 
 const validLogLevel = (logLevel, fallback) => {
     if(!validLogLevels.includes(logLevel)) {
-        fileLog.log('warn','Invalid Log Level '+type+ ' changed to '+fallback);
-        consoleLog.log('warn','Invalid Log Level '+type+ ' changed to '+fallback);
+        fileLog.log('warn','Invalid Log Level '+logLevel+ ' changed to '+fallback);
+        consoleLog.log('warn','Invalid Log Level '+logLevel+ ' changed to '+fallback);
 
         return fallback;
     }
