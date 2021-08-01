@@ -2,6 +2,12 @@
 
 var express = require('express');
 var app = express();
+
+// Activate compression while serving static files
+// + Fix a bug with Node v14 https://www.gitmemory.com/issue/dpskvn/express-sse/37/782771159
+const compression = require('compression')
+app.use(compression());
+
 const fs = require('fs');
 const { PerformanceObserver, performance } = require('perf_hooks');
 var moment = require('moment');
@@ -116,7 +122,7 @@ if(!skipGpio.sensoren) {
     sensorPressed("oben",value);
     //logging.add("sensorOben: " + value + sensorOben.readSync());
   });
-  
+
   sensorUnten.watch((err, value) => {
     sensorPressed("unten",value);
     //logging.add("sensorUnen: "+value + sensorUnten.readSync());
@@ -138,13 +144,13 @@ function sensorObenWert(value,err) {
   if (err) {
     sensoren.sensorOben.value = null;
     sensoren.sensorOben.text = "error";
-    
+
   }
   else {
     sensoren.sensorOben.value = value;
     sensoren.sensorOben.text = (value == 1 ? "nicht": "") + " betätigt";
 
-    
+
     // Wenn der Motor gerade hoch fährt,
     // und der Sensor betätigt wird, halte den Motor an.
     if(value == 0) {
@@ -158,7 +164,7 @@ function sensorUntenWert(value,err) {
   if (err) {
     sensoren.sensorUnten.value = null;
     sensoren.sensorUnten.text = "error";
-    
+
   }
   else {
     sensoren.sensorUnten.value = value;
@@ -166,7 +172,7 @@ function sensorUntenWert(value,err) {
 
     // Wenn der Motor gerade runter fährt,
     // und der Sensor betätigt wird, halte den Motor an.
-    if(value == 0) {
+    if(value == 0) {
       klappenModul.stoppeKlappe();
     }
   }
@@ -221,7 +227,7 @@ leseSensoren();
 //   }
 //   else {
 //     message = `Bitte gültige Sensorposition (oben/unten) und gültigen Montage-Wert (true/false) angeben.`;
-//     success = false;  
+//     success = false;
 //   }
 //   logging.add(message);
 //   return {success: success, message: message};
@@ -256,28 +262,8 @@ app.get('/', function (req, res) {
   res.send('Hello 🐔!');
 });
 
-// Hacky frontend delivery
-app.get('/frontend/index.html', function (req, res) {
-  res.sendFile(__dirname + '/frontend/index.html');
-});
-app.get('/frontend/coop.js', function (req, res) {
-  res.sendFile(__dirname + '/frontend/coop.js');
-});
-app.get('/frontend/chick.svg', function (req, res) {
-  res.sendFile(__dirname + '/frontend/chick.svg');
-});
-app.get('/frontend/angular.min.js', function (req, res) {
-  res.sendFile(__dirname + '/frontend/angular.min.js');
-});
-app.get('/frontend/moment.min.js', function (req, res) {
-  res.sendFile(__dirname + '/frontend/moment.min.js');
-});
-app.get('/frontend/angular-moment.min.js', function (req, res) {
-  res.sendFile(__dirname + '/frontend/angular-moment.min.js');
-});
-app.get('/frontend/de.min.js', function (req, res) {
-  res.sendFile(__dirname + '/frontend/de.min.js');
-});
+// Frontend delivery
+app.use('/frontend', express.static('frontend'));
 
 app.get('/status', function (req, res) {
   res.send({
@@ -290,7 +276,7 @@ app.get('/status', function (req, res) {
     maxSekundenEinWeg: klappenModul.config.maxSekundenEinWeg,
     korrekturSekunden: klappenModul.config.korrekturSekunden,
     skipGpio: skipGpio,
-    bme280: bme280.status,
+    bme280: skipGpio.bme280 ? 0 : bme280.status,
     bewegungSumme: klappenModul.bewegungSumme(),
     //dht22: dht22.status,
     cpuTemp: cpuTemp.status,
@@ -315,9 +301,7 @@ app.get('/status', function (req, res) {
   });
 });
 app.get('/log', function (req, res) {
-  res.send({
-    log: log
-  });
+  res.send({ log });
 });
 app.get('/korrigiere/hoch', function (req, res) {
   action = klappenModul.korrigiereHoch();
