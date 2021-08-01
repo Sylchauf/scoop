@@ -6,12 +6,10 @@ angular.module('todoApp', ['angularMoment'])
 angular.module('todoApp', ['angularMoment'])
   .controller('coopCtrl', ['$scope', '$http', 'moment', function($scope, $http, moment) {
 
-    
+
     $scope.coopStatus = {};
     $scope.coopStatusLaedt = false;
     $scope.coopStatusVonWann = null;
-
-    const coopUrl = 'http://192.168.31.21:3000/';
 
     $scope.camera = {
       url: null,
@@ -28,8 +26,8 @@ angular.module('todoApp', ['angularMoment'])
         $scope.camera.time = newTime;
       }
 
-      $scope.camera.url = coopUrl + 'cam/' + moment($scope.camera.time).unix();
-      $scope.camera.urlNightVision = coopUrl + 'nightvision/' + moment($scope.camera.timeNightVision).unix();
+      $scope.camera.url = '/cam/' + moment($scope.camera.time).unix();
+      $scope.camera.urlNightVision = '/nightvision/' + moment($scope.camera.timeNightVision).unix();
     };
 
     $scope.getStatus = () => {
@@ -37,7 +35,7 @@ angular.module('todoApp', ['angularMoment'])
 
         $http({
           method: 'GET',
-          url: coopUrl + 'status'
+          url: '/status'
         }).then(function successCallback(response) {
             $scope.coopStatus = response.data;
             $scope.coopStatusLaedt = false;
@@ -52,15 +50,15 @@ angular.module('todoApp', ['angularMoment'])
     }
     $scope.getStatus();
 
-    
-    
+
+
 
     $scope.klappeIst = (obenUnten) => {
       if(obenUnten=="oben") {
-        reqUrl = coopUrl + 'kalibriere/oben';
+        reqUrl = '/kalibriere/oben';
       }
       else if (obenUnten=="unten") {
-        reqUrl = coopUrl + 'kalibriere/unten';
+        reqUrl = '/kalibriere/unten';
       }
       else {
         alert("Fehler");
@@ -83,10 +81,10 @@ angular.module('todoApp', ['angularMoment'])
 
     $scope.klappeKorrigieren = (hochRunter) => {
       if(hochRunter=="hoch") {
-        reqUrl = coopUrl + 'korrigiere/hoch';
+        reqUrl = '/korrigiere/hoch';
       }
       else if (hochRunter=="runter") {
-        reqUrl = coopUrl + 'korrigiere/runter';
+        reqUrl = '/korrigiere/runter';
       }
       else {
         alert("Fehler");
@@ -107,10 +105,10 @@ angular.module('todoApp', ['angularMoment'])
 
     $scope.fahreKlappe = (hochRunter) => {
       if(hochRunter=="hoch") {
-        reqUrl = coopUrl + 'hoch';
+        reqUrl = '/hoch';
       }
       else if (hochRunter=="runter") {
-        reqUrl = coopUrl + 'runter';
+        reqUrl = '/runter';
       }
       else {
         alert("Fehler");
@@ -134,7 +132,7 @@ angular.module('todoApp', ['angularMoment'])
     }
 
     $scope.nachtsichten = () => {
-      let reqUrl = coopUrl + 'nightvision/new/';
+      let reqUrl = '/nightvision/new/';
 
       $http({
         method: 'GET',
@@ -150,10 +148,10 @@ angular.module('todoApp', ['angularMoment'])
 
     $scope.schalteLicht = (anAus) => {
       if(anAus) {
-        reqUrl = coopUrl + 'shelly/turn/on';
+        reqUrl = '/shelly/turn/on';
       }
       else {
-        reqUrl = coopUrl + 'shelly/turn/off';
+        reqUrl = '/shelly/turn/off';
       }
 
       $http({
@@ -169,10 +167,10 @@ angular.module('todoApp', ['angularMoment'])
 
     $scope.schalteHeizung = (anAus) => {
       if(anAus) {
-        reqUrl = coopUrl + 'heating/enable';
+        reqUrl = '/heating/enable';
       }
       else {
-        reqUrl = coopUrl + 'heating/disable';
+        reqUrl = '/heating/disable';
       }
 
       $http({
@@ -187,7 +185,7 @@ angular.module('todoApp', ['angularMoment'])
     }
 
     $scope.getLichtStatus = (anAus) => {
-      reqUrl = coopUrl + 'shelly/update';
+      reqUrl = '/shelly/update';
 
       $http({
         method: 'GET',
