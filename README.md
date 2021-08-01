@@ -72,6 +72,10 @@ The config parameters for the heating are:
   }
 ```
 
+## Requirements
+- Node v14+
+- fswebcam installed to use USB Webcam ([Installation](https://www.raspberrypi.org/documentation/usage/webcams/))
+
 ## Install & Run
 Install with `npm install`.
 

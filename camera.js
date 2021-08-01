@@ -2,6 +2,7 @@ var logging = require('./logging.js');
 var moment = require('moment');
 var gpioRelais = require('./gpio-relais.js');
 var events = require('./events.js');
+const {cameraInstance} = require('./modules/camera')
 
 var camera = {
     image: null,
@@ -25,34 +26,21 @@ var camera = {
     }
 };
 
-var cameraConfig = {
-    raspistill: {
-        rotation: 180,
-        noFileSave: true,
-        encoding: 'jpg',
-        width: 1296,
-        height: 972,
-        quality: 50
-    }
-}
+
 
 // Statistics Objects
 var cameraTimeStats = [];
 const cameraTimeStatsSince = moment();
 
-// Camera Objects
-const Raspistill = require('node-raspistill').Raspistill;
-const cam = new Raspistill(cameraConfig.raspistill);
-
-configure = (intervalSec, maxAgeSec, autoTakeMin) => {
+configure = (intervalSec, maxAgeSec, autoTakeSec) => {
     camera.intervalSec = intervalSec;
     camera.maxAgeSec = maxAgeSec;
-    camera.autoTakeMin = autoTakeMin
-    
+    camera.autoTakeSec = autoTakeSec
+
     logging.add("Camera Configure: "+
-        "  intervalSec " + camera.intervalSec + 
-        "  maxAgeSec " + camera.maxAgeSec + 
-        "  autoTakeMin " + camera.autoTakeMin
+        "  intervalSec " + camera.intervalSec +
+        "  maxAgeSec " + camera.maxAgeSec +
+        "  autoTakeSec " + camera.autoTakeSec
     );
 
     gpioRelais.setNightVision(false);
@@ -64,7 +52,8 @@ queueNightvision = () => {
   return this.takePhoto(true)
 }
 
-takePhoto = (nightVision = false) => {
+takePhoto = async (nightVision = false) => {
+    camera.lastRequest = new moment();
     let now = new Date();
     let max = camera.timeNextImage;
 
@@ -90,15 +79,14 @@ takePhoto = (nightVision = false) => {
       logging.add("Taking a"+ (nightVision ? " night vision" : "") +" picture");
       let takingPicture = moment();
 
-      cam.takePhoto().then((photo) => {
-
+      cameraInstance.takePicture().then((photo) => {
         newPicTime = new Date();
 
-        camera.image = photo;  
+        camera.image = photo;
         camera.time = newPicTime;
 
         if(nightVision) {
-          camera.ir.image = photo;  
+          camera.ir.image = photo;
           camera.ir.time = newPicTime;
           camera.ir.queued = false;
         }
@@ -112,7 +100,7 @@ takePhoto = (nightVision = false) => {
         if(nightVision && !gpioRelais.setNightVision(false)) {
           logging.add("Error when turning night vision off","warn");
         }
-        
+
         // Push new Webcam pictures via sse
         events.send('newWebcamPic'+(nightVision ? 'IR' : ''),newPicTime);
 
@@ -137,18 +125,14 @@ takePhoto = (nightVision = false) => {
         }
 
         // Schedule taking the next picture (only non-night vision)
-        if(camera.lastRequest && !nightVision) {
-
-          let takeUntil = camera.lastRequest.clone();
-          takeUntil.add(camera.autoTakeMin,'minutes');
-    
-          if(moment() < takeUntil) {
-            logging.add(`Taking another picture in ${camera.intervalSec}s. Last Request ${camera.lastRequest.format('HH:mm:ss')}, taking for ${camera.autoTakeMin}min until ${takeUntil.format('HH:mm:ss')}`);
-            setTimeout(function nextPicPls() {
-              takePhoto();
-            }, camera.intervalSec * 1000);
-          }
+        if(camera.lastRequest && !nightVision && camera.intervalSec > 0) {
+          logging.add(`Taking another picture in ${camera.intervalSec}s. Last Request ${camera.lastRequest.format('HH:mm:ss')}`);
+          setTimeout(function nextPicPls() {
+            takePhoto();
+          }, camera.intervalSec * 1000);
         }
+      }).catch(error => {
+        logging.add(error.toString(), 'error')
       });
       return true;
     }
@@ -210,13 +194,13 @@ getSvg = (which = "normal") => {
         if(getTemperature()) {
           html += '<text x="90" y="430" fill="black" font-size="20px">aber im Stall sind es '+ Math.round(getTemperature() * 10) /10 +' °C</text>';
 
-          
+
         }
-        
+
 
 
       }
-            
+
     html += `
           </g>
         </svg>
@@ -226,8 +210,6 @@ getSvg = (which = "normal") => {
 }
 
 getJpg = () => {
-    camera.lastRequest = new moment();
-    takePhoto();
     return camera.image;
 }
 
@@ -241,7 +223,6 @@ getIRStatus = () => {
 }
 
 exports.data = camera;
-exports.cameraConfig = cameraConfig;
 exports.configure = configure;
 exports.takePhoto = takePhoto;
 exports.getSvg = getSvg;

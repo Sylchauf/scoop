@@ -236,7 +236,7 @@ leseSensoren();
 klappenModul.init();
 
 var camera = require('./camera.js');
-camera.configure(config.camera.intervalSec, config.camera.maxAgeSec, config.camera.autoTakeMin);
+camera.configure(config.camera.intervalSec, config.camera.maxAgeSec, config.camera.autoTakeSec);
 
 var heating = require('./heating.js');
 heating.configure(config.heating.heatBelowC, config.heating.minimumHeatingMins, config.heating.enabled);
@@ -362,11 +362,12 @@ app.get('/cam/new', function (req, res) {
   }
 });
 app.get('/cam/:timestamp?', function (req, res) {
-  if(camera.getJpg()) {
+  const image = camera.getJpg()
+
+  if (image) {
     res.contentType('image/jpeg');
-    res.send(camera.getJpg());
-  }
-  else {
+    res.send(image);
+  } else {
     res.send({message:"geht nicht"});
   }
 });
