@@ -9,20 +9,20 @@ const gpioPorts = {
     }
 };
 
-klappeHoch = new Gpio(gpioPorts.out.hoch, 'high');
-klappeRunter = new Gpio(gpioPorts.out.runter, 'high');
-stoppeMotor();
+doorHoch = new Gpio(gpioPorts.out.hoch, 'high');
+doorRunter = new Gpio(gpioPorts.out.runter, 'high');
+stopMotor();
 
 console.log("Starte Motor");
-klappeHoch.writeSync(motorEin);
+doorHoch.writeSync(motorEin);
 
-function stoppeMotor() {
-    klappeHoch.writeSync(motorAus);
-    klappeRunter.writeSync(motorAus);
+function stopMotor() {
+    doorHoch.writeSync(motorAus);
+    doorRunter.writeSync(motorAus);
 }
 
-const sekunden = 1;
+const seconds = 1;
 setTimeout(function motorSpaeterAnhalten() {
     console.log("Stoppe Motor");
-    stoppeMotor();
-}, sekunden * 1000);
+    stopMotor();
+}, seconds * 1000);

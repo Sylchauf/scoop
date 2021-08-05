@@ -1,7 +1,5 @@
-// !TODO kalib oben, dann kann man 2x hintereinander runter machen.
-
-var express = require('express');
-var app = express();
+const express = require('express');
+const app = express();
 
 // Activate compression while serving static files
 // + Fix a bug with Node v14 https://www.gitmemory.com/issue/dpskvn/express-sse/37/782771159
@@ -9,19 +7,18 @@ const compression = require('compression')
 app.use(compression());
 
 const fs = require('fs');
-const { PerformanceObserver, performance } = require('perf_hooks');
-var moment = require('moment');
+const moment = require('moment');
 
 var logging = require('./logging.js');
 
 var events = require('./events.js');
 
 let config = require('./config.json');
+const DOOR_DIRECTION = require('./constant/DOOR_DIRECTION')
+
 const bootTimestamp = moment();
 logging.thingspeakSetAPIKey(config.thingspeakAPI);
 logging.setLogLevel(config.logLevel);
-
-const ganzeFahrtSek = config.ganzeFahrtSek;
 
 const skipGpio = {
   motor: config.skipGpio.motor,
@@ -84,18 +81,8 @@ else {
   logging.add("Skipping CPU Temperature Sensor");
 }
 
-var klappenModul = require('./klappe.js');
-klappenModul.configure(
-  config.sensorObenMontiert,
-  config.sensorUntenMontiert,
-  config.ganzeFahrtSek,
-  config.maxSekundenEinWeg,
-  config.korrekturSekunden,
-  skipGpio
-);
-
-klappenModul.stoppeKlappe();
-logging.add("Motor initialisiert");
+const Door = require('./door.js');
+logging.add("Door instance initialised");
 
 sensoren = {
   sensorOben: {
@@ -154,7 +141,7 @@ function sensorObenWert(value,err) {
     // Wenn der Motor gerade hoch fährt,
     // und der Sensor betätigt wird, halte den Motor an.
     if(value == 0) {
-      klappenModul.stoppeKlappe();
+      doornModul.stoppeKlappe();
     }
   }
   sensoren.sensorOben.time = new Date();
@@ -173,7 +160,7 @@ function sensorUntenWert(value,err) {
     // Wenn der Motor gerade runter fährt,
     // und der Sensor betätigt wird, halte den Motor an.
     if(value == 0) {
-      klappenModul.stoppeKlappe();
+      doornModul.stoppeKlappe();
     }
   }
   sensoren.sensorUnten.time = new Date();
@@ -210,33 +197,9 @@ function leseSensoren() {
 }
 leseSensoren();
 
-
-// function setSensorMontiert(pos,boo) {
-//   // !TODO
-//   // Hiermit kann man setzen, ob die einzelnen Sensoren montiert sind oder nicht.
-//   // Falls ein Sensor kaputt geht kann man die Sensoren-Sicherheitsnetze so umgehen.
-//   if((pos == "oben" || pos == "unten") && (boo == true || boo == false)) {
-//     if(pos == "oben") {
-//       sensorObenMontiert = boo;
-//     }
-//     else {
-//       sensorUntenMontiert = boo;
-//     }
-//     message = `Sensor ${pos} montiert: ${boo}`;
-//     success = true;
-//   }
-//   else {
-//     message = `Bitte gültige Sensorposition (oben/unten) und gültigen Montage-Wert (true/false) angeben.`;
-//     success = false;
-//   }
-//   logging.add(message);
-//   return {success: success, message: message};
-// }
-
-klappenModul.init();
-
 var camera = require('./camera.js');
 camera.configure(config.camera.intervalSec, config.camera.maxAgeSec, config.camera.autoTakeSec);
+logging.add("Camera instance initialised");
 
 var heating = require('./heating.js');
 heating.configure(config.heating.heatBelowC, config.heating.minimumHeatingMins, config.heating.enabled);
@@ -267,34 +230,12 @@ app.use('/frontend', express.static('frontend'));
 
 app.get('/status', function (req, res) {
   res.send({
-    klappe: klappenModul.klappe,
-    initialisiert: klappenModul.initialisiert,
-    initialPosition: klappenModul.initialPosition,
-    initialPositionManuell: klappenModul.initialPositionManuell,
-    sensorObenMontiert: klappenModul.config.sensorObenMontiert,
-    sensorUntenMontiert: klappenModul.config.sensorUntenMontiert,
-    maxSekundenEinWeg: klappenModul.config.maxSekundenEinWeg,
-    korrekturSekunden: klappenModul.config.korrekturSekunden,
+    doorState: Door.doorState,
     skipGpio: skipGpio,
-    bme280: skipGpio.bme280 ? 0 : bme280.status,
-    bewegungSumme: klappenModul.bewegungSumme(),
-    //dht22: dht22.status,
     cpuTemp: cpuTemp.status,
-    sensoren: sensoren,
     camera: {
-      image: 'http://192.168.31.21/cam',
-      time: camera.data.time,
-      intervalSec: camera.data.intervalSec,
-      maxAgeSec: camera.data.maxAgeSec,
-      timeNextImage: camera.data.timeNextImage,
-      busy: camera.data.busy,
-      ir: {
-        time: camera.data.ir.time,
-        lastRequest: camera.data.ir.lastRequest
-      },
-      statistics: camera.data.statistics
+
     },
-    shelly: shelly.status,
     cron: cronTasks.status,
     booted: bootTimestamp,
     heating: heating.status
@@ -303,48 +244,29 @@ app.get('/status', function (req, res) {
 app.get('/log', function (req, res) {
   res.send({ log });
 });
-app.get('/korrigiere/hoch', function (req, res) {
-  action = klappenModul.korrigiereHoch();
+
+// Moving door
+app.get('/calibrate/up', function (req, res) {
+  const action = Door.correctTop();
   res.send(action);
 });
-app.get('/korrigiere/runter', function (req, res) {
-  action = klappenModul.korrigiereRunter();
+app.get('/calibrate/down', function (req, res) {
+  const action = Door.correctBottom();
   res.send(action);
 });
-app.get('/kalibriere/:obenUnten', function (req, res) {
-  action = klappenModul.kalibriere(req.params.obenUnten);
+
+app.get('/up', function (req, res) {
+  const action = Door.moveDoor(DOOR_DIRECTION.UP);
+  if (!action.success) res.status(403);
   res.send(action);
 });
-app.get('/hoch', function (req, res) {
-  // TODO: GanzeFahrtSek in Klappenmodul ausgliedern
-  action = klappenModul.klappeFahren("hoch",ganzeFahrtSek);
-  if(action.success != true) {
-    res.status(403);
-  }
+app.get('/down', function (req, res) {
+  const action = Door.moveDoor(DOOR_DIRECTION.DOWN);
+  if (!action.success) res.status(403);
   res.send(action);
 });
-app.get('/runter', function (req, res) {
-  // TODO: GanzeFahrtSek in Klappenmodul ausgliedern
-  action = klappenModul.klappeFahren("runter",ganzeFahrtSek);
-  if(action.success != true) {
-    res.status(403);
-  }
-  res.send(action);
-});
-app.get('/hoch/:wielange', function (req, res) {
-  action = klappenModul.klappeFahren("hoch",parseFloat(req.params.wielange));
-  if(action.success != true) {
-    res.status(403);
-  }
-  res.send(action);
-});
-app.get('/runter/:wielange', function (req, res) {
-  action = klappenModul.klappeFahren("runter",parseFloat(req.params.wielange));
-  if(action.success != true) {
-    res.status(403);
-  }
-  res.send(action);
-});
+
+
 app.get('/reset', function (req, res) {
     /* Dirty hack for triggering nodemon */
     var data = fs.readFileSync('test.json', 'utf-8');

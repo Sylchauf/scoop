@@ -53,12 +53,12 @@ angular.module('todoApp', ['angularMoment'])
 
 
 
-    $scope.klappeIst = (obenUnten) => {
+    $scope.doorIst = (obenUnten) => {
       if(obenUnten=="oben") {
-        reqUrl = '/kalibriere/oben';
+        reqUrl = '/calibrate/oben';
       }
       else if (obenUnten=="unten") {
-        reqUrl = '/kalibriere/unten';
+        reqUrl = '/calibrate/unten';
       }
       else {
         alert("Fehler");
@@ -68,18 +68,18 @@ angular.module('todoApp', ['angularMoment'])
         method: 'GET',
         url: reqUrl
       }).then(function successCallback(response) {
-          $scope.kalibriereStatus = response.data;
-          $scope.kalibriereStatusVonWann = new Date();
+          $scope.calibrateStatus = response.data;
+          $scope.calibrateStatusVonWann = new Date();
           $scope.getStatus();
         }, function errorCallback(response) {
           alert("Fehler beim Kalibrieren: "+ response);
-          $scope.kalibriereStatus = response.data;
-          $scope.kalibriereStatusVonWann = new Date();
+          $scope.calibrateStatus = response.data;
+          $scope.calibrateStatusVonWann = new Date();
           $scope.getStatus();
         });
     }
 
-    $scope.klappeKorrigieren = (hochRunter) => {
+    $scope.doorKorrigieren = (hochRunter) => {
       if(hochRunter=="hoch") {
         reqUrl = '/korrigiere/hoch';
       }
@@ -210,12 +210,12 @@ angular.module('todoApp', ['angularMoment'])
       $scope.updateCameraTime(JSON.parse(event.data),true); //.replaceAll('"',''), true);
       $scope.$apply();
     });
-    es.addEventListener('klappenPosition', function (event) {
-      $scope.coopStatus.klappe.position = JSON.parse(event.data); //.replaceAll('"','');
+    es.addEventListener('doornPosition', function (event) {
+      $scope.coopStatus.door.position = JSON.parse(event.data); //.replaceAll('"','');
       $scope.$apply();
     });
-    es.addEventListener('klappenStatus', function (event) {
-      $scope.coopStatus.klappe.status = JSON.parse(event.data); //.replaceAll('"','');
+    es.addEventListener('doornStatus', function (event) {
+      $scope.coopStatus.door.status = JSON.parse(event.data); //.replaceAll('"','');
       $scope.$apply();
     });
     es.addEventListener('shellyRelayIsOn', function (event) {

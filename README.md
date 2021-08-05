@@ -85,31 +85,23 @@ Run with `node stall.js`. I host the service with [pm2](https://pm2.keymetrics.i
 ## Web Endpoints
 
 ### General
-* `/frontend/index.html` A hacky frontend (AngularJS)
+* `/frontend` A hacky frontend (AngularJS)
 * `/status` Status as JSON-Object
 * `/log` Latest log messages
 
-### Hatch
-Moves the hatch up or down for a specified duration (`config.maxSekundenEinWeg`).
-* `/hoch` Move hatch up ()
-* `/runter` Move hatch down
+### Door
+Moves the door up or down.
+* `/up` open the door entirely
+* `/down` close the door entirely
 
-Move the hatch for a specified duration (in seconds) - be careful!
-* `/hoch/:wielange`
-* `/runter/:wielange`
-
-#### Corrections
-If the hatch is not entirely open/closed, small correction movements can be fired which won't affect the up/down position.
-* `/korrigiere/hoch` Correct in 0.5s intervals (`config.korrekturSekunden`)
-* `/korrigiere/runter`
-
-To tell the hatch if it is up or down
-* `/kalibriere/oben` Tell the coop that the hatch is up
-* `/kalibriere/unten` Tell the coop that the hatch is down
+#### Calibration
+To initialize your door state, on if the door is not entirely open/closed, small correction movements can be fired
+* `/calibrate/up` Move up the door for `config.door.correctionSec`s (default is 0.5s) and consider the door entirely open 
+* `/calibrate/down` Move down the door for `config.door.correctionSec`s (default is 0.5s) and consider the door entirely close
 
 ### Webcam
 * `/cam/new` Take a new picture
-* `/cam/:timestamp?` Retrieve the webcam picture. Can optionally provide a timestamp (which isn't even used in backend) if the url needs to change to load the new licture
+* `/cam/:timestamp?` Retrieve the webcam picture. Can optionally provide a timestamp (which isn't even used in backend) if the url needs to change to load the new picture
 * `/camsvg/:timestamp?` Provides an svg version, with timestamp/current temps rendered into the picture
 * `/nightvision/new` Take a new night vision (IR) picture
 * `/nightvision/:timestamp?` Same as `/cam/:timestamp?`
@@ -125,8 +117,8 @@ To tell the hatch if it is up or down
 * `/events` A [server-sent events](https://www.npmjs.com/package/express-sse) (SSE) stream informing about things happening in the coop:
   * newWebcamPic
   * newWebcamPicIR
-  * klappenStatus
-  * klappenPosition
+  * doornStatus
+  * doornPosition
   * shellyRelayIsOn
   * heating
 

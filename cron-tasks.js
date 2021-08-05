@@ -2,7 +2,7 @@ var SunCalc = require('suncalc');
 var CronJob = require('cron').CronJob;
 var moment = require('moment');
 var logging = require('./logging.js');
-var klappenModul = require('./klappe.js');
+var doornModul = require('./door.js');
 var heating = require('./heating.js');
 
 const cronConfig = {
@@ -135,13 +135,13 @@ const setupCronjobs = () => {
                 logging.add("Cronjob Run - Ding dong Cronjob Fired!! - " + newJob.action + " @ " + newJob.time);
 
                 if(newJob.action === "open") {
-                    action = klappenModul.klappeFahren("hoch",null,false);
+                    action = doornModul.doorFahren("hoch",null,false);
                     if(action.success != true) {
                         logging.add("Cronjob Run "+newJob.action+" - Unsuccessful.", "warn");
                     }
                 }
                 else if(newJob.action === "close") {
-                    action = klappenModul.klappeFahren("runter",null,false);
+                    action = doornModul.doorFahren("runter",null,false);
                     if(action.success != true) {
                         logging.add("Cronjob Run "+newJob.action+" - Unsuccessful.", "warn");
                     }
