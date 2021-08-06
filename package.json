@@ -1,7 +1,7 @@
 {
-  "name": "schicke-chicks",
+  "name": "scoop",
   "version": "1.0.0",
-  "description": "schicke-chicks server",
+  "description": "Smart Chicken Coop Software",
   "main": "index.js",
   "scripts": {
     "tsc": "tsc",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thoughtgap/schicke-chicks.git"
+    "url": "git+https://github.com/Sylchauf/scoop.git"
   },
-  "author": "moritz",
-  "license": "ISC",
+  "author": "Sylchauf",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/thoughtgap/schicke-chicks/issues"
+    "url": "https://github.com/Sylchauf/scoop/issues"
   },
-  "homepage": "https://github.com/thoughtgap/schicke-chicks#readme",
+  "homepage": "https://github.com/Sylchauf/scoop#readme",
   "dependencies": {
     "bme280": "^2.1.0",
     "compression": "^1.7.4",
