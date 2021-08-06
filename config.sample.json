@@ -1,6 +1,5 @@
 {
   "skipGpio": {
-    "motor": true,
     "dht22": true,
     "sensoren": true,
     "bme280": true,
@@ -22,8 +21,6 @@
   },
   "sensorObenMontiert": false,
   "sensorUntenMontiert": false,
-  "motorAus": 1,
-  "motorEin": 0,
   "intervals": {
     "dht22": 30,
     "dht22OnError": 300,
@@ -40,7 +37,6 @@
     },
     "correctionSec": 0.5
   },
-  "thingspeakAPI": "XXXXXXXX",
   "camera": {
     "module": "UsbWebcam",
     "intervalSec": 20,

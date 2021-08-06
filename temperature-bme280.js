@@ -67,7 +67,6 @@ readBME280 = () => {
             let now = moment();
             status.time = now;
             logging.add(`BME280 temperature ${status.values.temperature.toFixed(2)} pressure ${status.values.pressure.toFixed(2)} humidity ${status.values.humidity.toFixed(2)}`);
-            logging.thingspeakLog("field1="+status.values.temperature.toFixed(2)+"&field2="+status.values.pressure.toFixed(2)+"&field3="+status.values.humidity.toFixed(2));
 
             // Minutely history, preserved for one hour
             const keepEverySec = 60; // How often to preserve a value
@@ -75,9 +74,9 @@ readBME280 = () => {
 
             // Add value every x seconds
             //logging.add(`BME280 hourly history ${history.length} entries`);
-            
+
             if(history.length == 0 || now.diff(history[history.length - 1].time) >= keepEverySec * 1000) {
-                
+
                 history.push({
                     time: now,
                     temperature: status.values.temperature,
@@ -94,7 +93,7 @@ readBME280 = () => {
                 });
                 //logging.add(`BME280 hourly history removed old --> ${history.length} entries`);
 
-            
+
                 // Add development of values
                 let development = {
                     temperature: null,
@@ -133,13 +132,13 @@ readBME280 = () => {
                     development.humidity = "same";
                 }
 
-                // Only expose the oldest element (max 1h old) to the status object to keep minimal data 
+                // Only expose the oldest element (max 1h old) to the status object to keep minimal data
                 status.hourAgo = history[0];
                 status.hourAgo.development = development;
 
             }
             // else {
-            //     logging.add(`BME280 hourly history not adding (${history[history.length - 1].time}ms)`); 
+            //     logging.add(`BME280 hourly history not adding (${history[history.length - 1].time}ms)`);
             // }
 
             // Daily min/max values
@@ -161,8 +160,8 @@ readBME280 = () => {
                     pressureTime: null,
                     humidityTime: null
                 };
-            }   
-            
+            }
+
             // Min
             if(!status.daily.min.temperature || status.daily.min.temperature >= status.values.temperature) {
                 status.daily.min.temperature = status.values.temperature;

@@ -32,7 +32,6 @@ readCPUTemp = () => {
               status.values.temperature = temp;
               status.time = new moment();
               logging.add(`CPU ${temp}°C`);
-              logging.thingspeakLog("field4="+status.values.temperature);
             }
             if(status.intervalSec) {
               setTimeout(function temperaturErneutLesen() {
